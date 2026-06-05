@@ -4,7 +4,6 @@ import excepciones.CasillaYaDescubiertaException;
 import java.io.Serializable;
 import java.util.Random;
 
-
 public class Tablero implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -21,119 +20,154 @@ public class Tablero implements Serializable {
         calcularMinasAdyacentes();
     }
 
-    private void inicializarTablero() {
+    // INICIALIZACIÓN
 
+    private void inicializarTablero() {
         tablero = new Casilla[FILAS][COLUMNAS];
 
-        for (int fila = 0; fila < FILAS; fila++) {
-            for (int columna = 0; columna < COLUMNAS; columna++) {
-                tablero[fila][columna] = new Casilla();
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                tablero[i][j] = new Casilla();
             }
         }
     }
 
+    // MINAS
+  
     private void colocarMinas() {
 
-        Random random = new Random();
-        int minasColocadas = 0;
+        Random r = new Random();
+        int colocadas = 0;
 
-        while (minasColocadas < MINAS) {
+        while (colocadas < MINAS) {
 
-            int fila = random.nextInt(FILAS);
-            int columna = random.nextInt(COLUMNAS);
+            int f = r.nextInt(FILAS);
+            int c = r.nextInt(COLUMNAS);
 
-            if (!tablero[fila][columna].isMina()) {
-
-                tablero[fila][columna].setMina(true);
-                minasColocadas++;
+            if (!tablero[f][c].isMina()) {
+                tablero[f][c].setMina(true);
+                colocadas++;
             }
         }
     }
 
+    // NUMEROS ADYACENTES
+  
     private void calcularMinasAdyacentes() {
 
-        for (int fila = 0; fila < FILAS; fila++) {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
 
-            for (int columna = 0; columna < COLUMNAS; columna++) {
-
-                if (tablero[fila][columna].isMina()) {
-                    continue;
-                }
+                if (tablero[i][j].isMina()) continue;
 
                 int contador = 0;
 
-                for (int i = -1; i <= 1; i++) {
+                for (int x = -1; x <= 1; x++) {
+                    for (int y = -1; y <= 1; y++) {
 
-                    for (int j = -1; j <= 1; j++) {
+                        int nf = i + x;
+                        int nc = j + y;
 
-                        int nuevaFila = fila + i;
-                        int nuevaColumna = columna + j;
-
-                        if (esValida(nuevaFila, nuevaColumna)
-                                && tablero[nuevaFila][nuevaColumna].isMina()) {
-
+                        if (esValida(nf, nc) && tablero[nf][nc].isMina()) {
                             contador++;
                         }
                     }
                 }
 
-                tablero[fila][columna].setMinasAdyacentes(contador);
+                tablero[i][j].setMinasAdyacentes(contador);
             }
         }
     }
 
+    
+    // DESCUBRIR (CON RECURSIVIDAD 
+
     public void descubrirCasilla(int fila, int columna)
-        throws CasillaYaDescubiertaException {
+            throws CasillaYaDescubiertaException {
 
-    if (!esValida(fila, columna)) {
-        throw new ArrayIndexOutOfBoundsException(
-                "Posición fuera del tablero");
+        if (!esValida(fila, columna)) {
+            throw new ArrayIndexOutOfBoundsException("Posición fuera del tablero");
+        }
+
+        Casilla casilla = tablero[fila][columna];
+
+        if (casilla.isDescubierta()) {
+            throw new CasillaYaDescubiertaException("La casilla ya fue descubierta");
+        }
+
+        revelarRecursivo(fila, columna);
     }
 
-    Casilla casilla = tablero[fila][columna];
+    // 🔥 LO IMPORTANTE DEL EXAMEN
+    private void revelarRecursivo(int fila, int columna) {
 
-    if (casilla.isDescubierta()) {
-        throw new CasillaYaDescubiertaException(
-                "La casilla ya fue descubierta");
-    }
+        if (!esValida(fila, columna)) return;
 
-    casilla.setDescubierta(true);
-}
+        Casilla casilla = tablero[fila][columna];
 
-    public void marcarBandera(int fila, int columna) {
+        if (casilla.isDescubierta() || casilla.isMina()) return;
 
-        if (esValida(fila, columna)) {
+        casilla.setDescubierta(true);
 
-            Casilla casilla = tablero[fila][columna];
+        // si tiene número, se detiene
+        if (casilla.getMinasAdyacentes() > 0) return;
 
-            casilla.setBandera(!casilla.isBandera());
+        // expandir vecinos
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+
+                if (i != 0 || j != 0) {
+                    revelarRecursivo(fila + i, columna + j);
+                }
+            }
         }
     }
 
+    public void toggleBandera(int fila, int columna) throws CasillaYaDescubiertaException {
+
+        if (!esValida(fila, columna)) return;
+
+        Casilla c = tablero[fila][columna];
+
+        //  Lanza la excepción si intentas poner bandera donde ya picaste
+        if (c.isDescubierta()) {
+            throw new CasillaYaDescubiertaException("No puedes poner una bandera en una casilla ya descubierta.");
+        }
+
+        c.setBandera(!c.isBandera());
+    }
+    
+    // VICTORIA
+
     public boolean verificarVictoria() {
 
+        int libres = 0;
         int descubiertas = 0;
 
-        for (int fila = 0; fila < FILAS; fila++) {
-            for (int columna = 0; columna < COLUMNAS; columna++) {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
 
-                if (!tablero[fila][columna].isMina()
-                        && tablero[fila][columna].isDescubierta()) {
-
-                    descubiertas++;
+                if (!tablero[i][j].isMina()) {
+                    libres++;
+                    if (tablero[i][j].isDescubierta()) {
+                        descubiertas++;
+                    }
                 }
             }
         }
 
-        return descubiertas == (FILAS * COLUMNAS - MINAS);
+        return libres == descubiertas;
     }
 
-    private boolean esValida(int fila, int columna) {
 
-        return fila >= 0 && fila < FILAS
-                && columna >= 0 && columna < COLUMNAS;
+    // VALIDACIÓN
+  
+    private boolean esValida(int f, int c) {
+        return f >= 0 && f < FILAS && c >= 0 && c < COLUMNAS;
     }
 
+    // GETTER
+    
     public Casilla[][] getTablero() {
         return tablero;
     }
@@ -142,10 +176,10 @@ public class Tablero implements Serializable {
 
         int contador = 0;
 
-        for (int fila = 0; fila < FILAS; fila++) {
-            for (int columna = 0; columna < COLUMNAS; columna++) {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
 
-                if (tablero[fila][columna].isMina()) {
+                if (tablero[i][j].isMina()) {
                     contador++;
                 }
             }

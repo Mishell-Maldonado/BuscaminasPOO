@@ -6,31 +6,41 @@ import modelo.Tablero;
 
 public class VistaConsola {
 
-    private Scanner scanner;
+    private final Scanner scanner = new Scanner(System.in);
 
-    public VistaConsola() {
-        scanner = new Scanner(System.in);
-    }
-
-    public void mostrarMenu() {
+    public void mostrarMenuPrincipal() {
         System.out.println("\n=== BUSCAMINAS ===");
         System.out.println("1. Nueva partida");
         System.out.println("2. Cargar partida");
         System.out.println("3. Salir");
     }
 
+    public void mostrarMenuJuego() {
+        System.out.println("\nAcción:");
+        System.out.println("1. Descubrir casilla");
+        System.out.println("2. Colocar/Quitar bandera");
+        System.out.println("3. Guardar partida");
+        System.out.println("4. Salir al menú");
+        System.out.print("Seleccione(1-4): ");
+    }
+
     public int leerOpcion() {
-        System.out.print("Seleccione una opción: ");
-        return scanner.nextInt();
+        while (true) {
+            try {
+                return Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.print("Opción inválida. Ingrese un número: ");
+            }
+        }
     }
 
     public String leerCoordenada() {
-        System.out.print("Ingrese una coordenada (Ej: A5): ");
-        return scanner.next();
+        System.out.print("Ingrese coordenada (ej. A5): ");
+        return scanner.nextLine().trim().toUpperCase();
     }
 
-    public void mostrarMensaje(String mensaje) {
-        System.out.println(mensaje);
+    public void mostrarMensaje(String msg) {
+        System.out.println(msg);
     }
 
     public void mostrarVictoria() {
@@ -38,64 +48,34 @@ public class VistaConsola {
     }
 
     public void mostrarDerrota() {
-        System.out.println("¡Boom! Has encontrado una mina.");
+        System.out.println("¡BOOM! Has encontrado una mina.");
     }
 
     public void mostrarTablero(Tablero tablero) {
 
-        Casilla[][] casillas = tablero.getTablero();
+        Casilla[][] c = tablero.getTablero();
 
-        System.out.println();
+        System.out.println("\n     1  2  3  4  5  6  7  8  9 10");
 
-        System.out.print("    ");
+        for (int i = 0; i < 10; i++) {
 
-        for (int i = 1; i <= 10; i++) {
-            System.out.printf("%2d ", i);
-        }
+            System.out.print((char) ('A' + i) + "   ");
 
-        System.out.println();
+            for (int j = 0; j < 10; j++) {
 
-        for (int fila = 0; fila < 10; fila++) {
+                Casilla casilla = c[i][j];
 
-            char letraFila = (char) ('A' + fila);
+                String v;
 
-            System.out.print(letraFila + "   ");
+                if (casilla.isBandera()) v = "⚑";
+                else if (!casilla.isDescubierta()) v = "■";
+                else if (casilla.isMina()) v = "X";
+                else if (casilla.getMinasAdyacentes() == 0) v = "V";
+                else v = String.valueOf(casilla.getMinasAdyacentes());
 
-            for (int columna = 0; columna < 10; columna++) {
-
-                Casilla casilla = casillas[fila][columna];
-
-                String valor;
-
-            if (casilla.isBandera()) {
-
-                valor = "⚑";
-
-                } else if (!casilla.isDescubierta()) {
-
-                valor = "■";
-
-                } else if (casilla.isMina()) {
-
-                valor = "X";
-
-                } else if (casilla.getMinasAdyacentes() == 0) {
-
-                valor = "V";
-
-                } else {
-
-                valor = String.valueOf(casilla.getMinasAdyacentes());
-                }
-
-            System.out.printf("%-3s", valor);            
-        }
-
+                System.out.printf("%-3s", v);
+            }
             System.out.println();
         }
-    }
-
-    public void cerrarScanner() {
-        scanner.close();
     }
 }

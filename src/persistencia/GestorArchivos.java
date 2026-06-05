@@ -16,8 +16,6 @@ public class GestorArchivos {
 
             salida.writeObject(objeto);
 
-            System.out.println("Partida guardada correctamente.");
-
         } catch (IOException e) {
 
             System.out.println("Error al guardar la partida: "
@@ -31,7 +29,7 @@ public class GestorArchivos {
                     new FileInputStream(nombreArchivo))) {
 
         Object objeto = entrada.readObject();
-        System.out.println("Partida cargada correctamente.");
+        
         return objeto;
 
     } catch (IOException | ClassNotFoundException e) {

@@ -1,88 +1,113 @@
 package controlador;
 
 import excepciones.CasillaYaDescubiertaException;
-import java.util.Scanner;
 import modelo.Tablero;
 import vista.VistaConsola;
+import persistencia.GestorArchivos;
 
 public class JuegoControlador {
 
-    private final Tablero tablero;
-    private final Scanner scanner;
-    private final VistaConsola vista;
-
-    public JuegoControlador() {
-        tablero = new Tablero();
-        scanner = new Scanner(System.in);
-        vista = new VistaConsola();
-    }
-
+	private Tablero tablero = new Tablero();
+    private final VistaConsola vista = new VistaConsola();
+    private final GestorArchivos archivo = new GestorArchivos();
+    
     public void iniciarJuego() {
 
-        boolean juegoTerminado = false;
+        while (true) {
 
-        System.out.println("===== BUSCAMINAS =====");
+            vista.mostrarMenuPrincipal();
+            int opcion = vista.leerOpcion();
 
-        while (!juegoTerminado) {
+            if (opcion == 3) {
+                vista.mostrarMensaje("Saliendo...");
+                return;
+            }
+            if (opcion == 2) {
+                Tablero cargado = (Tablero) archivo.cargarPartida("partida.dat");
 
-            // MUESTRA EL TABLERO
+                if (cargado != null) {
+                    this.tablero = cargado;
+                    vista.mostrarMensaje("Partida cargada correctamente.");
+                    jugar(); 
+                }
+            }
+            if (opcion == 1) {
+                tablero = new Tablero(); // NUEVA PARTIDA
+                jugar();
+            }
+        }
+    }
+
+    private void jugar() {
+
+        boolean fin = false;
+
+        while (!fin) {
+
             vista.mostrarTablero(tablero);
+            vista.mostrarMenuJuego();
+
+            int op = vista.leerOpcion();
 
             try {
 
-                System.out.print("Ingrese coordenada (Ej: A5): ");
-                String coordenada = scanner.next().toUpperCase();
+                if (op == 1) {
+                    String coord = vista.leerCoordenada();
 
-                int fila = coordenada.charAt(0) - 'A';
+                    // Validación para que no explote si escriben "5A" o "Z20"
+                    if (!coord.matches("[A-J](10|[1-9])")) {
+                        vista.mostrarMensaje("Coordenada inválida. Use formato como A5, B10, etc.");
+                        continue; 
+                    }
 
-                int columna;
+                    int f = coord.charAt(0) - 'A';
+                    int c = Integer.parseInt(coord.substring(1)) - 1;
 
-            if (coordenada.length() == 3) {
-                columna = Integer.parseInt(coordenada.substring(1)) - 1;
-            } else {
-                columna = Character.getNumericValue(coordenada.charAt(1)) - 1;
-            }
+                    if (tablero.getTablero()[f][c].isMina()) {
+                        vista.mostrarTablero(tablero); 
+                        vista.mostrarDerrota();
+                        fin = true;
 
-                tablero.descubrirCasilla(fila, columna);
+                    } else {
+                        tablero.descubrirCasilla(f, c);
+                        
+                        if (tablero.verificarVictoria()) {
+                            vista.mostrarTablero(tablero);
+                            vista.mostrarVictoria();
+                            fin = true;
+                        }
+                    }
+                }
 
-                if (tablero.getTablero()[fila][columna].isMina()) {
+                if (op == 2) {
+                    String coord = vista.leerCoordenada();
 
-                    vista.mostrarTablero(tablero);
+                    if (!coord.matches("[A-J](10|[1-9])")) {
+                        vista.mostrarMensaje("Coordenada inválida. Use formato como A5, B10, etc.");
+                        continue;
+                    }
 
-                    System.out.println("¡BOOM! Encontraste una mina.");
-                    juegoTerminado = true;
+                    int f = coord.charAt(0) - 'A';
+                    int c = Integer.parseInt(coord.substring(1)) - 1;
 
-                } else if (tablero.verificarVictoria()) {
+                    tablero.toggleBandera(f, c);
+                }
+                
+                if (op == 3) {
+                    archivo.guardarPartida(tablero, "partida.dat");
+                    vista.mostrarMensaje("Partida guardada.");
+                }
 
-                    vista.mostrarTablero(tablero);
-
-                    System.out.println("¡Felicidades! Has ganado.");
-                    juegoTerminado = true;
-
-                } else {
-
-                    System.out.println("Casilla descubierta correctamente.");
+                if (op == 4) {
+                    fin = true;
                 }
 
             } catch (CasillaYaDescubiertaException e) {
-
-                System.out.println(e.getMessage());
-
-            } catch (ArrayIndexOutOfBoundsException e) {
-
-                System.out.println("Posición inválida.");
-
-            } catch (Exception e) {
-
-                System.out.println("Entrada incorrecta.");
-                scanner.nextLine();
+                vista.mostrarMensaje(e.getMessage());
+            } 
+            catch (ArrayIndexOutOfBoundsException e) {
+                vista.mostrarMensaje("Coordenada fuera del tablero");
             }
         }
-
-        scanner.close();
-    }
-
-    public Tablero getTablero() {
-        return tablero;
     }
 }
