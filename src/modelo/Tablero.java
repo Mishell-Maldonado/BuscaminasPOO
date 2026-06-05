@@ -27,7 +27,7 @@ public class Tablero implements Serializable {
 
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
-                tablero[i][j] = new Casilla();
+            	tablero[i][j] = new CasillaSegura(); 
             }
         }
     }
@@ -45,7 +45,7 @@ public class Tablero implements Serializable {
             int c = r.nextInt(COLUMNAS);
 
             if (!tablero[f][c].isMina()) {
-                tablero[f][c].setMina(true);
+                tablero[f][c] = new CasillaMina(); 
                 colocadas++;
             }
         }

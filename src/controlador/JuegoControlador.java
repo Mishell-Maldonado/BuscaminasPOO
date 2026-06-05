@@ -63,7 +63,14 @@ public class JuegoControlador {
                     int f = coord.charAt(0) - 'A';
                     int c = Integer.parseInt(coord.substring(1)) - 1;
 
+                    //  Si tiene bandera, no deja descubrir
+                    if (tablero.getTablero()[f][c].isBandera()) {
+                        vista.mostrarMensaje("¡Casilla con bandera! Quítala antes de descubrirla.");
+                        continue;
+                    }
+
                     if (tablero.getTablero()[f][c].isMina()) {
+                        tablero.getTablero()[f][c].setDescubierta(true); // OBLIGA A MOSTRAR LA X
                         vista.mostrarTablero(tablero); 
                         vista.mostrarDerrota();
                         fin = true;
