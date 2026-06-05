@@ -1,6 +1,8 @@
 package vista;
 
 import java.util.Scanner;
+import modelo.Casilla;
+import modelo.Tablero;
 
 public class VistaConsola {
 
@@ -14,9 +16,7 @@ public class VistaConsola {
         System.out.println("\n=== BUSCAMINAS ===");
         System.out.println("1. Nueva partida");
         System.out.println("2. Cargar partida");
-        System.out.println("3. Guardar partida");
-        System.out.println("4. Marcar bandera");
-        System.out.println("5. Salir");
+        System.out.println("3. Salir");
     }
 
     public int leerOpcion() {
@@ -24,12 +24,9 @@ public class VistaConsola {
         return scanner.nextInt();
     }
 
-    /**
-     * Lee coordenadas tipo A5
-     */
     public String leerCoordenada() {
         System.out.print("Ingrese una coordenada (Ej: A5): ");
-        return scanner.next().toUpperCase();
+        return scanner.next();
     }
 
     public void mostrarMensaje(String mensaje) {
@@ -41,34 +38,64 @@ public class VistaConsola {
     }
 
     public void mostrarDerrota() {
-        System.out.println("¡BOOM! Has encontrado una mina.");
+        System.out.println("¡Boom! Has encontrado una mina.");
     }
 
-    /**
-     * Muestra una representación simple del tablero.
-     */
-    public void mostrarTablero(char[][] tablero) {
+    public void mostrarTablero(Tablero tablero) {
+
+        Casilla[][] casillas = tablero.getTablero();
 
         System.out.println();
 
-        System.out.print("  ");
+        System.out.print("    ");
 
-        for (int i = 0; i < 10; i++) {
-            System.out.print(i + " ");
+        for (int i = 1; i <= 10; i++) {
+            System.out.printf("%2d ", i);
         }
 
         System.out.println();
 
         for (int fila = 0; fila < 10; fila++) {
 
-            System.out.print((char) ('A' + fila) + " ");
+            char letraFila = (char) ('A' + fila);
+
+            System.out.print(letraFila + "   ");
 
             for (int columna = 0; columna < 10; columna++) {
 
-                System.out.print(tablero[fila][columna] + " ");
-            }
+                Casilla casilla = casillas[fila][columna];
+
+                String valor;
+
+            if (casilla.isBandera()) {
+
+                valor = "⚑";
+
+                } else if (!casilla.isDescubierta()) {
+
+                valor = "■";
+
+                } else if (casilla.isMina()) {
+
+                valor = "X";
+
+                } else if (casilla.getMinasAdyacentes() == 0) {
+
+                valor = "V";
+
+                } else {
+
+                valor = String.valueOf(casilla.getMinasAdyacentes());
+                }
+
+            System.out.printf("%-3s", valor);            
+        }
 
             System.out.println();
         }
+    }
+
+    public void cerrarScanner() {
+        scanner.close();
     }
 }
